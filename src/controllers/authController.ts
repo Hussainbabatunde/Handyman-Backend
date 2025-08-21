@@ -1,18 +1,63 @@
 import { Request, Response } from "express";
 import { OtpService } from "../services/otpService";
 import { where } from "sequelize";
+import { generateToken } from "../utils/jwt";
+import bcrypt from "bcrypt";
 const {User} = require("../../models"); // adjust path if needed
 
 
-export const loginController = (req: Request, res: Response) => {
-  const { email, password } = req.body;
-  // Your login logic here
-  return res.json({ message: "Login successful", email });
+export const loginController = async (req: Request, res: Response) => {
+  try {
+  const { phoneNumber, password } = req.body;
+  if(!phoneNumber) return res.status(400).json({message: "Phone Number is required."})
+  if(!password) return res.status(400).json({message: "Password is required."})
+    const userInfo = await User.findOne({
+  where: {phoneNumber}
+  })
+
+  if(!userInfo) return res.status(404).json({message: "User does not exist."})
+
+    // Compare passwords
+    const isMatch = await bcrypt.compare(password, userInfo.password);
+    if(!isMatch) return res.status(400).json({message: "Invalid credentials." })
+
+      // Generate access token
+    const accessToken = generateToken({
+      id: userInfo?.id,
+      email: userInfo?.email,
+      userType: userInfo?.userType,
+    });
+
+    return res.status(200).json({
+      message: "Login successful",
+      accessToken,
+      user: {
+        id: userInfo.id,
+        firstName: userInfo.firstName,
+        lastName: userInfo.lastName,
+        email: userInfo.email,
+        phoneNumber: userInfo.phoneNumber,
+        userType: userInfo.userType,
+    createdAt: userInfo.createdAt,
+    updatedAt: userInfo.updatedAt
+      },
+    });
+    } catch (error: any) {
+      console.error("Error login controller:", error);
+    return res.status(500).json({ message: error.message });
+  }
 };
 
 export const registerController = async (req: Request, res: Response) => {
   try {
-    const { email, password, phoneNumber, lastName, firstName, userType } = req.body;
+    const { email, password, phoneNumber, lastName, firstName, userType, confirmPassword } = req.body;
+  if(!email) return res.status(400).json({message: "Email is required."})
+  if(!password) return res.status(400).json({message: "Password is required."})
+  if(!phoneNumber) return res.status(400).json({message: "Phone number is required."})
+  if(!lastName) return res.status(400).json({message: "Last name is required."})
+  if(!firstName) return res.status(400).json({message: "First name is required."})
+
+    if(password != confirmPassword) return res.status(400).json({message: "Passwords do not match."})
     const userInfo = await User.findOne({
       where: {phoneNumber}
     })
@@ -30,8 +75,25 @@ export const registerController = async (req: Request, res: Response) => {
       userType,
     });
 
-    return res.status(201).json({ message: 'User registered', userId: user });
+      // Generate JWT (only include necessary fields)
+    const accessToken = generateToken({
+      id: user!.id,
+      email: user!.email,
+      userType: user!.userType
+    });
+    
+    return res.status(201).json({ message: 'User registered', accessToken, data: {
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    phoneNumber: user.phoneNumber,
+    userType: user.userType,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt
+  } });
   } catch (error: any) {
+    console.error("Error register controller:", error);
     return res.status(400).json({ message: error.message });
   }
 };
@@ -46,7 +108,7 @@ export const verifyPhoneController = async (req: Request, res: Response) => {
     const {sessionId, otp} = await OtpService.generateOtp(phoneNo)
     return res.status(200).json({message: "Otp sent successfully", sessionId, otp})
 } catch (err) {
-    console.error("Error sending OTP:", err);
+    console.error("Error verify phone controller:", err);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -61,7 +123,7 @@ export const resendOtpController = async (req: Request, res: Response) => {
     const {otp} = await OtpService.resendOtp(phoneNo, sessionId)
     return res.status(200).json({message: "Otp sent successfully", otp})
 } catch (err) {
-    console.error("Error sending OTP:", err);
+    console.error("Error resend OTP controller:", err);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -79,17 +141,25 @@ export const validateOtpController = async (req: Request, res: Response) => {
       const userInfo = await User.findOne({
         where: {phoneNumber: phoneNo}
       })
-      console.log("user info: ", userInfo);
       if(userInfo){
         return res.status(200).json({
           message: "Validation successful.",
           status: true,
-          data: userInfo
+          data: {
+        id: userInfo?.id,
+        firstName: userInfo?.firstName,
+        lastName: userInfo?.lastName,
+        email: userInfo?.email,
+        phoneNumber: userInfo?.phoneNumber,
+        userType: userInfo?.userType,
+    createdAt: userInfo?.createdAt,
+    updatedAt: userInfo?.updatedAt
+      }
         })
       }
     return res.status(200).json({message: "Validation successful.", status: false})
 } catch (err) {
-    console.error("Error sending OTP:", err);
+    console.error("Error validate phone:", err);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
