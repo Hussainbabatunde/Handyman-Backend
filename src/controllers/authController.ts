@@ -50,7 +50,7 @@ export const loginController = async (req: Request, res: Response) => {
 
 export const registerController = async (req: Request, res: Response) => {
   try {
-    const { email, password, phoneNumber, lastName, firstName, userType, confirmPassword } = req.body;
+    const { email, password, phoneNumber, lastName, firstName, userType, confirmPassword, userJobType } = req.body;
   if(!email) return res.status(400).json({message: "Email is required."})
   if(!password) return res.status(400).json({message: "Password is required."})
   if(!phoneNumber) return res.status(400).json({message: "Phone number is required."})
@@ -73,6 +73,7 @@ export const registerController = async (req: Request, res: Response) => {
       lastName,
       firstName,
       userType,
+      userJobType
     });
 
       // Generate JWT (only include necessary fields)
@@ -89,6 +90,7 @@ export const registerController = async (req: Request, res: Response) => {
     email: user.email,
     phoneNumber: user.phoneNumber,
     userType: user.userType,
+    userJobType: user.userJobType,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt
   } });

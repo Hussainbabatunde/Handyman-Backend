@@ -52,6 +52,10 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: 1, // 1 = customer, 2 = artisan
         validate: { isIn: [[1, 2]] },
       },
+      userJobType: {
+      type: DataTypes.JSON, // Stores an array of strings
+      allowNull: true,
+    },
     }, {
       sequelize,
       modelName: 'User',
