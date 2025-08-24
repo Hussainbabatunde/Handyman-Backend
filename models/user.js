@@ -12,6 +12,10 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      this.hasMany(models.Bookings, {
+        foreignKey: "requestedBy",
+        as: "bookings"
+      })
     }
 
     // Method to compare passwords

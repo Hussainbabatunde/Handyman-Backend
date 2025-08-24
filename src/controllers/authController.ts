@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import { OtpService } from "../services/otpService";
-import { where } from "sequelize";
+import { Sequelize, where } from "sequelize";
 import { generateToken } from "../utils/jwt";
 import bcrypt from "bcrypt";
-const {User} = require("../../models"); // adjust path if needed
+const {User, JobTypes} = require("../../models"); // adjust path if needed
 
 
 export const loginController = async (req: Request, res: Response) => {
@@ -163,5 +163,38 @@ export const validateOtpController = async (req: Request, res: Response) => {
 } catch (err) {
     console.error("Error validate phone:", err);
     return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+
+export const artisansUserController = async (req: Request, res: Response) => {
+  try {
+    const { key } = req.params; // search by key
+    
+
+    if (!key) {
+      return res.status(400).json({ message: "Key is required." });
+    }
+
+    // Find job type by key
+    const users = await User.findAll({
+      attributes: { exclude: ["password"] },
+  where: Sequelize.where(
+    Sequelize.fn("JSON_CONTAINS", Sequelize.col("userJobType"), JSON.stringify([key])),
+    1
+  )
+});
+
+const jobType = await JobTypes.findOne({
+  where: {key}
+})
+
+    return res.status(200).json({
+      jobType,
+      data: users,
+    });
+  } catch (error: any) {
+    console.error("Error update job type controller:", error);
+    return res.status(500).json({ message: error.message });
   }
 };

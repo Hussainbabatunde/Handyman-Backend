@@ -1,8 +1,5 @@
 import { Request, Response } from "express";
-import { OtpService } from "../services/otpService";
 import { Op, where } from "sequelize";
-import { generateToken } from "../utils/jwt";
-import bcrypt from "bcrypt";
 const {JobTypes} = require("../../models"); // adjust path if needed
 
 
