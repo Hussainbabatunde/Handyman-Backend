@@ -21,6 +21,11 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: "assignedArtisan",
       as: "artisan"
     });
+
+    this.belongsTo(models.JobTypes, {
+      foreignKey: "jobTypeKey",
+      as: "jobType"
+    });
     }
   }
   Bookings.init({

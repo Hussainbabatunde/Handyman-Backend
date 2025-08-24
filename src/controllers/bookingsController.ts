@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { Op, where } from "sequelize";
-const { Bookings, User } = require("../../models"); // adjust path if needed
+const { Bookings, User, JobTypes } = require("../../models"); // adjust path if needed
 
 
 export const createBookingsController = async (req: Request, res: Response) => {
@@ -26,10 +26,19 @@ export const createBookingsController = async (req: Request, res: Response) => {
             status: "pending"
         });
 
+        const bookingWithUsers = await Bookings.findOne({
+      where: { id: booking.id },
+      include: [
+        { model: User, as: "requester", attributes: ["id", "firstName", "lastName", "email", "phoneNumber", "createdAt"] },
+        { model: User, as: "artisan", attributes: ["id", "firstName", "lastName", "email", "phoneNumber", "createdAt"] },
+        { model: JobTypes, as: "jobType", attributes: ["id", "name", "description"] },
+      ],
+    });
+
 
         return res.status(201).json({
             message: 'Booking created successfully.', data: {
-                booking
+                booking: bookingWithUsers
             }
         });
     } catch (error: any) {
