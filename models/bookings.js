@@ -60,6 +60,10 @@ module.exports = (sequelize, DataTypes) => {
   status: {
     type: DataTypes.STRING,
     allowNull: true, // optional
+  },
+  completeNarration: {
+    type: DataTypes.STRING,   // long text field
+    allowNull: true,        // can be null
   }
 }, {
   sequelize,

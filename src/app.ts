@@ -7,6 +7,9 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import router from './routes/routes';
 const db = require('../models');
+const cron = require("node-cron");
+const { Bookings } = require("../models"); // adjust path to your models
+const { Op } = require("sequelize");
 // import menuRoutes from './routes/menuRoutes';
 // import { connectToDatabase } from './config/db';
 // import swaggerUi from 'swagger-ui-express';
@@ -39,6 +42,43 @@ db.sequelize.authenticate()
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);
     });
+// Runs every day at 23:59 (11:59 PM)
+cron.schedule("59 23 * * *", async () => {
+  try {
+    console.log("Running booking expiration job...");
+
+    const today = new Date();
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
+    // Find all bookings with status still pending and scheduled today
+    const bookingsToExpire = await Bookings.findAll({
+      where: {
+        status: "pending",
+        scheduledAt: {
+          [Op.lte]: endOfDay, // expired if it's today or earlier
+        },
+      },
+    });
+
+    if (bookingsToExpire.length > 0) {
+      await Bookings.update(
+        { status: "expired" },
+        {
+          where: {
+            id: bookingsToExpire.map((b: any) => b.id),
+          },
+        }
+      );
+
+      console.log(`Expired ${bookingsToExpire.length} bookings`);
+    } else {
+      console.log("No bookings to expire today.");
+    }
+  } catch (err) {
+    console.error("Error running booking expiration job:", err);
+  }
+});
+
   })
   .catch((err: any) => {
     console.error('❌ Failed to connect to database:', err);

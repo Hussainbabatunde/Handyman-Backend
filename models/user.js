@@ -60,6 +60,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.JSON, // Stores an array of strings
       allowNull: true,
     },
+    stars: {
+  type: DataTypes.INTEGER,
+  allowNull: true,
+  defaultValue: 0,
+}
     }, {
       sequelize,
       modelName: 'User',
