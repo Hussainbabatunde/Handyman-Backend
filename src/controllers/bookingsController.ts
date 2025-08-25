@@ -30,7 +30,7 @@ export const createBookingsController = async (req: Request, res: Response) => {
       where: { id: booking.id },
       include: [
         { model: User, as: "requester", attributes: ["id", "firstName", "lastName", "email", "phoneNumber", "createdAt"] },
-        { model: User, as: "artisan", attributes: ["id", "firstName", "lastName", "email", "phoneNumber", "createdAt", "stars"] },
+        { model: User, as: "artisan", attributes: ["id", "firstName", "lastName", "email", "phoneNumber", "createdAt", "stars", "profileImg"] },
         { model: JobTypes, as: "jobType", attributes: ["id", "name", "description"] },
       ],
     });

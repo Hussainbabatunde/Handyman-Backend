@@ -189,6 +189,8 @@ export const artisansUserController = async (req: Request, res: Response) => {
 const jobType = await JobTypes.findOne({
   where: {key}
 })
+// console.log(users.map((u: any) => u.toJSON()));
+
 
     return res.status(200).json({
       jobType,

@@ -24,64 +24,74 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   User.init({
-      firstName: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        validate: { notEmpty: true },
-      },
-      lastName: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        validate: { notEmpty: true },
-      },
-      email: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true,
-        validate: { isEmail: true, notEmpty: true },
-      },
-      phoneNumber: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        validate: { notEmpty: true },
-      },
-      password: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        validate: { notEmpty: true },
-      },
-      userType: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 1, // 1 = customer, 2 = artisan
-        validate: { isIn: [[1, 2]] },
-      },
-      userJobType: {
+    firstName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: { notEmpty: true },
+    },
+    lastName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: { notEmpty: true },
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      validate: { isEmail: true, notEmpty: true },
+    },
+    phoneNumber: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: { notEmpty: true },
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: { notEmpty: true },
+    },
+    userType: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1, // 1 = customer, 2 = artisan
+      validate: { isIn: [[1, 2]] },
+    },
+    userJobType: {
       type: DataTypes.JSON, // Stores an array of strings
       allowNull: true,
     },
     stars: {
-  type: DataTypes.INTEGER,
-  allowNull: true,
-  defaultValue: 0,
-}
-    }, {
-      sequelize,
-      modelName: 'User',
-      hooks: {
-        beforeCreate: async (user) => {
-          if (user.password) {
-            const hash = await bcrypt.hash(user.password, 10);
-            user.password = hash;
-          }
-        },
-        beforeUpdate: async (user) => {
-          if (user.password) {
-            const hash = await bcrypt.hash(user.password, 10);
-            user.password = hash;
-          }
-        },
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0,
+    },
+    profileImg: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: "",
+    },
+    previousWork: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: [],
+    }
+  }, {
+    sequelize,
+    modelName: 'User',
+    hooks: {
+      beforeCreate: async (user) => {
+        if (user.password) {
+          const hash = await bcrypt.hash(user.password, 10);
+          user.password = hash;
+        }
       },
-    });
+      beforeUpdate: async (user) => {
+        if (user.password) {
+          const hash = await bcrypt.hash(user.password, 10);
+          user.password = hash;
+        }
+      },
+    },
+  });
   return User;
 };
