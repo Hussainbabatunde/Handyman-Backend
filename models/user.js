@@ -16,6 +16,7 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "requestedBy",
         as: "bookings"
       })
+      User.hasOne(models.Kyc, { foreignKey: 'userId' });
     }
 
     // Method to compare passwords
@@ -74,6 +75,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.JSON,
       allowNull: true,
       defaultValue: [],
+    },
+    completedKyc: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     }
   }, {
     sequelize,

@@ -55,8 +55,31 @@ export const getAllBookingsController = async (req: Request, res: Response) =>{
         const bookings = await Bookings.findAll({
             where: { requestedBy: user?.id },
             include: [
-                {model: User, as: "requester", attributes: ["id", "firstName", "lastName", "email"]},
-                {model: User, as: "artisan", attributes: ["id", "firstName", "lastName", "email"]},
+                {model: User, as: "requester", attributes: ["id", "firstName", "lastName", "email", "stars"]},
+                {model: User, as: "artisan", attributes: ["id", "firstName", "lastName", "email", "stars"]},
+                { model: JobTypes, as: "jobType", attributes: ["id", "name", "key", "description"] },
+            ]
+        })
+
+        return res.status(200).json({
+            message: "All user bookings.",
+            data: bookings
+        })
+    } catch (error: any) {
+        console.error("Error get all bookings controller:", error);
+        return res.status(500).json({ message: error.message });
+    }
+}
+
+export const getAllArtisanBookingsController = async (req: Request, res: Response) =>{
+    try {
+        const user = req.user
+        
+        const bookings = await Bookings.findAll({
+            where: { assignedArtisan: user?.id },
+            include: [
+                {model: User, as: "requester", attributes: ["id", "firstName", "lastName", "email", "stars"]},
+                {model: User, as: "artisan", attributes: ["id", "firstName", "lastName", "email", "stars"]},
                 { model: JobTypes, as: "jobType", attributes: ["id", "name", "key", "description"] },
             ]
         })
@@ -74,6 +97,7 @@ export const getAllBookingsController = async (req: Request, res: Response) =>{
 export const updateBookingStatusController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params; // search by key
+    const {status, artisanStatus} = req.body;
 
     // Find job type by key
     const bookingInfo = await Bookings.findOne({ where: { id } });
@@ -82,7 +106,8 @@ export const updateBookingStatusController = async (req: Request, res: Response)
     }
 
     // Update only fields provided
-     bookingInfo.status = "expired";
+     bookingInfo.status = status;
+     bookingInfo.artisanStatus = artisanStatus;
 
     await bookingInfo.save();
 
