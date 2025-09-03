@@ -64,6 +64,10 @@ module.exports = (sequelize, DataTypes) => {
   completeNarration: {
     type: DataTypes.STRING,   // long text field
     allowNull: true,        // can be null
+  },
+  clientStatus: {
+    type: DataTypes.STRING,
+    allowNull: true,   // optional
   }
 }, {
   sequelize,

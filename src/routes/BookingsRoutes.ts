@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { createJobTypeController, getJobTypeController, updateJobTypeController } from "../controllers/jobTypeController";
-import { BookingDetailsController, completeBookingStatusController, createBookingsController, getAllArtisanBookingsController, getAllBookingsController, updateBookingStatusController } from "../controllers/bookingsController";
+import { BookingDetailsController, completeBookingStatusController, createBookingsController, getAllArtisanBookingsController, getAllBookingsController, getRecentArtisanBookingsController, updateBookingStatusController } from "../controllers/bookingsController";
 import { authMiddleware } from "../middlewares/authMiddleware";
 
 const BookingsRouter = Router();
@@ -11,5 +11,6 @@ BookingsRouter.patch("/update/:id", authMiddleware, updateBookingStatusControlle
 BookingsRouter.post("/complete/:id", authMiddleware, completeBookingStatusController);
 BookingsRouter.get("/details/:id", authMiddleware, BookingDetailsController);
 BookingsRouter.get("/artisan/all", authMiddleware, getAllArtisanBookingsController);
+BookingsRouter.get("/artisan/recent", authMiddleware, getRecentArtisanBookingsController);
 
 export default BookingsRouter;
