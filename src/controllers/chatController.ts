@@ -7,56 +7,58 @@ export const registerChatHandler = (io: Server, socket: Socket) => {
 
     // join room for personal chatting
     socket.on("join", async ({ userId, otherUserId }) => {
-  // check if conversation exists
-  console.log("userId: ", userId, " otherUserId: ", otherUserId);
-  let conversation = await Conversation.findOne({
-    where: {
-      [Op.or]: [
-        { user1Id: userId, user2Id: otherUserId },
-        { user1Id: otherUserId, user2Id: userId },
-      ],
-    },
-  });
-  
+        // check if conversation exists
+        console.log("userId: ", userId, " otherUserId: ", otherUserId);
+        let conversation = await Conversation.findOne({
+            where: {
+                [Op.or]: [
+                    { user1Id: userId, user2Id: otherUserId },
+                    { user1Id: otherUserId, user2Id: userId },
+                ],
+            },
+        });
 
-  if (!conversation) {
-    conversation = await Conversation.create({
-      user1Id: userId,
-      user2Id: otherUserId,
+
+        if (!conversation) {
+            conversation = await Conversation.create({
+                user1Id: userId,
+                user2Id: otherUserId,
+            });
+        }
+
+        const roomId = conversation.id;
+        socket.join(roomId);
+        socket.emit("joined_room", { roomId, conversationId: conversation.id });
+
+        console.log(`User ${userId} joined ${roomId}`);
     });
-  }
-
-  const roomId = `room_${conversation.id}`;
-  socket.join(roomId);
-  socket.emit("joined_room", { roomId, conversationId: conversation.id });
-
-  console.log(`User ${userId} joined ${roomId}`);
-});
 
 
     socket.on("send_message", async (data) => {
-  console.log("data: ", data);
+        console.log("data: ", data);
         try {
-            
+
             const { senderId, receiverId, conversationId, content } = data;
-            console.log("senderId: ", senderId);
-            
+
 
             if (senderId == receiverId) {
                 socket.emit("error", { message: "Cannot send message to yourself" })
                 return
             }
-            const receiver = User.findByPk(receiverId)
+            const receiver = await User.findByPk(receiverId)
             if (!receiver) {
                 socket.emit("error", { message: "Receiver not found" });
                 return;
             }
 
-            const message = Chat.create({
+            const message = await Chat.create({
                 senderId, receiverId, conversationId, content
             })
-            io.to(`user_${receiverId}`).emit("new_message", message)
-            io.to(`user_${senderId}`).emit("new_message", message)
+            // Emit to everyone in the conversation room
+            const roomId = conversationId;
+            console.log("message: ", message);
+            
+            io.to(roomId).emit("new_message", message);
         }
         catch (err) {
             console.error(err);
@@ -65,28 +67,20 @@ export const registerChatHandler = (io: Server, socket: Socket) => {
     })
 
     // Get messages in a conversation
-    socket.on("get_messages", async ({ userId, otherUserId }, callback) => {
+    socket.on("get_messages", async ({ conversationId }) => {
         try {
             const messages = await Chat.findAll({
-                where: {
-                    [Op.or]: [
-                        { senderId: userId, receiverId: otherUserId },
-                        { senderId: otherUserId, receiverId: userId }
-                    ]
-                },
-                include: [
-                    { model: User, as: "sender", attributes: ["id", "username"] },
-                    { model: User, as: "receiver", attributes: ["id", "username"] }
-                ],
-                order: [["createdAt", "ASC"]]
+                where: { conversationId },
+                order: [["createdAt", "ASC"]],
             });
 
-            callback(messages);
+            socket.emit("get_messages_response", messages);
         } catch (err) {
             console.error(err);
-            callback([]);
+            socket.emit("get_messages_response", []);
         }
     });
+
 
     // Get chat list (unique users + last message)
     socket.on("get_chats", async (userId: number, callback) => {
