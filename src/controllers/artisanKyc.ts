@@ -15,11 +15,14 @@ export const kycController = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "documents must be an array" });
     }
 
+    console.log("documents: ", documents);
+    
+
     // Bulk insert into DB
     // Attach userId to each document
     const docsWithUser = documents.map(doc => ({
       ...doc,
-      userId: user?.id
+      userId: user?.id,
     }));
 
     // Bulk insert
