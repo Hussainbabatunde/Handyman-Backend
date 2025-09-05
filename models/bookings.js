@@ -68,7 +68,11 @@ module.exports = (sequelize, DataTypes) => {
   clientStatus: {
     type: DataTypes.STRING,
     allowNull: true,   // optional
-  }
+  },
+  otp: {
+  type: DataTypes.STRING, // or DataTypes.INTEGER if you want only numbers
+  allowNull: true,        // can be null
+},
 }, {
   sequelize,
   modelName: 'Bookings',

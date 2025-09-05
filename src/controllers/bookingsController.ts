@@ -98,13 +98,32 @@ export const getAllArtisanBookingsController = async (req: Request, res: Respons
 export const updateBookingStatusController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params; // search by key
-    const { status, artisanStatus } = req.body;
+    const { status, artisanStatus, otp } = req.body;
 
     // Find job type by key
     const bookingInfo = await Bookings.findOne({ where: { id } });
     if (!bookingInfo) {
       return res.status(404).json({ message: "Booking not found." });
     }
+
+if (bookingInfo) {
+  if (status === "accepted" && artisanStatus === "pending") {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let otp = '';
+    for (let i = 0; i < 6; i++) {
+      otp += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    await bookingInfo.update({ otp });
+    console.log("OTP saved in DB:", otp);
+  }
+
+  if (status === "accepted" && artisanStatus === "ongoing") {
+    if (bookingInfo.otp != otp ){
+      return res.status(400).json({ message: "Invalid Code." });
+    }
+  }
+}
 
     // Update only fields provided
     bookingInfo.status = status;
@@ -124,7 +143,7 @@ export const updateBookingStatusController = async (req: Request, res: Response)
 export const completeBookingStatusController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params; // search by key
-    const { artisanId, rating, narration } = req.body;
+    const { artisanId, rating, narration, type, clientId } = req.body;
 
     // Find job type by key
     const bookingInfo = await Bookings.findOne({ where: { id } });
@@ -132,7 +151,13 @@ export const completeBookingStatusController = async (req: Request, res: Respons
       return res.status(404).json({ message: "Booking not found." });
     }
 
-    const userInfo = await User.findOne({ where: { id: artisanId } });
+    let userInfo 
+    if(type== "artisan"){
+       userInfo = await User.findOne({ where: { id: artisanId } });
+    }
+    else if (type== "client"){
+       userInfo = await User.findOne({ where: { id: clientId } });
+    }
     if (!userInfo) {
       return res.status(404).json({ message: "Artisan cannot be found." });
     }
@@ -145,7 +170,11 @@ export const completeBookingStatusController = async (req: Request, res: Respons
 
     await bookingInfo.save();
     console.log("Saved booking:", bookingInfo.toJSON());
+    
     let artisanRating
+    let totalRating
+
+
     if (userInfo.stars < 6) {
       userInfo.stars = rating;
       artisanRating = rating
@@ -153,11 +182,11 @@ export const completeBookingStatusController = async (req: Request, res: Respons
     else {
       let divider = Math.ceil(Number(userInfo.stars) / 5)
       let newRating = Number(userInfo.stars) + rating
-      let totalRating = newRating / divider;
+      totalRating = newRating / divider;
       userInfo.stars = totalRating;
       artisanRating = totalRating
     }
-    await userInfo.save();
+    await userInfo.update({stars: totalRating});
 
     return res.status(200).json({
       message: "Booking completed successfully.",
@@ -200,8 +229,17 @@ export const getRecentArtisanBookingsController = async (req: Request, res: Resp
   try {
     const user = req.user
 
-    const bookingsCount = await Bookings.count({
-      where: { assignedArtisan: user?.id },
+    const bookingsCountPending = await Bookings.count({
+      where: { assignedArtisan: user?.id, status: "pending" },
+      include: [
+        { model: User, as: "requester", attributes: ["id", "firstName", "lastName", "email", "stars"] },
+        { model: User, as: "artisan", attributes: ["id", "firstName", "lastName", "email", "stars"] },
+        { model: JobTypes, as: "jobType", attributes: ["id", "name", "key", "description"] },
+      ]
+    })
+
+    const bookingsCountCompleted = await Bookings.count({
+      where: { assignedArtisan: user?.id, artisanStatus: "completed" },
       include: [
         { model: User, as: "requester", attributes: ["id", "firstName", "lastName", "email", "stars"] },
         { model: User, as: "artisan", attributes: ["id", "firstName", "lastName", "email", "stars"] },
@@ -222,7 +260,8 @@ export const getRecentArtisanBookingsController = async (req: Request, res: Resp
 
     return res.status(200).json({
       message: "Recent user bookings.",
-      bookingsCount: bookingsCount,
+      bookingsCountPending: bookingsCountPending,
+      bookingsCountCompleted: bookingsCountCompleted,
       data: bookings
     })
   } catch (error: any) {
