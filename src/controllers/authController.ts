@@ -3,8 +3,8 @@ import { OtpService } from "../services/otpService";
 import { Sequelize, where } from "sequelize";
 import { generateToken } from "../utils/jwt";
 import bcrypt from "bcrypt";
-const { User } = require("../../models/user"); // adjust path if needed
-const { JobTypes } = require("../../models/jobtypes"); // adjust path if needed
+const {User} = require("../../models"); // adjust path if needed
+const {JobTypes} = require("../../models"); // adjust path if needed
 
 
 export const loginController = async (req: Request, res: Response) => {
@@ -64,10 +64,12 @@ export const registerController = async (req: Request, res: Response) => {
     const userInfo = await User.findOne({
       where: { phoneNumber }
     })
-
+    console.log("userinfo: ", userInfo);
+    
     if (userInfo) {
       return res.status(400).json({ message: "User already exist." })
     }
+    else{
     // Create the user (password will be hashed by the hook)
     const user = await User.create({
       email,
@@ -99,6 +101,7 @@ export const registerController = async (req: Request, res: Response) => {
         updatedAt: user.updatedAt
       }
     });
+  }
   } catch (error: any) {
     console.error("Error register controller:", error);
     return res.status(400).json({ message: error.message });

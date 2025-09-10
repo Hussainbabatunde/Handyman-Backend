@@ -1,6 +1,6 @@
 'use strict';
 const {
-  Model
+  Model, DataTypes, Sequelize
 } = require('sequelize');
 const bcrypt = require('bcrypt');
 module.exports = (sequelize, DataTypes) => {
@@ -101,3 +101,5 @@ module.exports = (sequelize, DataTypes) => {
   });
   return User;
 };
+
+// module.exports = User
