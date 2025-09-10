@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const bookingsController_1 = require("../controllers/bookingsController");
+const authMiddleware_1 = require("../middlewares/authMiddleware");
+const BookingsRouter = (0, express_1.Router)();
+BookingsRouter.post("/create", authMiddleware_1.authMiddleware, bookingsController_1.createBookingsController);
+BookingsRouter.get("/client/all", authMiddleware_1.authMiddleware, bookingsController_1.getAllBookingsController);
+BookingsRouter.patch("/update/:id", authMiddleware_1.authMiddleware, bookingsController_1.updateBookingStatusController);
+BookingsRouter.post("/complete/:id", authMiddleware_1.authMiddleware, bookingsController_1.completeBookingStatusController);
+BookingsRouter.get("/details/:id", authMiddleware_1.authMiddleware, bookingsController_1.BookingDetailsController);
+BookingsRouter.get("/artisan/all", authMiddleware_1.authMiddleware, bookingsController_1.getAllArtisanBookingsController);
+BookingsRouter.get("/artisan/recent", authMiddleware_1.authMiddleware, bookingsController_1.getRecentArtisanBookingsController);
+exports.default = BookingsRouter;

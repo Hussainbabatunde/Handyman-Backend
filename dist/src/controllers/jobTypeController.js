@@ -1,0 +1,90 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.updateJobTypeController = exports.getJobTypeController = exports.createJobTypeController = void 0;
+const sequelize_1 = require("sequelize");
+const { JobTypes } = require("../../models"); // adjust path if needed
+const createJobTypeController = async (req, res) => {
+    try {
+        const { name, key, description } = req.body;
+        if (!name)
+            return res.status(400).json({ message: "Email is required." });
+        if (!key)
+            return res.status(400).json({ message: "Password is required." });
+        if (!description)
+            return res.status(400).json({ message: "Description is required." });
+        const prevJobType = await JobTypes.findOne({
+            where: {
+                [sequelize_1.Op.or]: [
+                    { name: name },
+                    { key: key }
+                ]
+            }
+        });
+        if (prevJobType)
+            return res.status(400).json({ message: "Job type exist." });
+        // Create the job type
+        const jobType = await JobTypes.create({
+            name,
+            key,
+            description
+        });
+        return res.status(201).json({ message: 'Job type created successfully.', data: {
+                name: jobType.id,
+                key: jobType.firstName,
+                createdAt: jobType.createdAt,
+                updatedAt: jobType.updatedAt
+            } });
+    }
+    catch (error) {
+        console.error("Error create job type controller:", error);
+        return res.status(500).json({ message: error.message });
+    }
+};
+exports.createJobTypeController = createJobTypeController;
+const getJobTypeController = async (req, res) => {
+    try {
+        const prevJobType = await JobTypes.findAll();
+        return res.status(200).json({ status: true, data: prevJobType });
+    }
+    catch (error) {
+        console.error("Error get job type controller:", error);
+        return res.status(500).json({ message: error.message });
+    }
+};
+exports.getJobTypeController = getJobTypeController;
+const updateJobTypeController = async (req, res) => {
+    try {
+        const { key } = req.params; // search by key
+        const { name, description } = req.body;
+        if (!key) {
+            return res.status(400).json({ message: "Key is required to update job type." });
+        }
+        // Find job type by key
+        const jobType = await JobTypes.findOne({ where: { key } });
+        if (!jobType) {
+            return res.status(404).json({ message: "Job type not found." });
+        }
+        // Update only fields provided
+        if (name)
+            jobType.name = name;
+        if (description)
+            jobType.description = description;
+        await jobType.save();
+        return res.status(200).json({
+            message: "Job type updated successfully.",
+            data: {
+                id: jobType.id,
+                name: jobType.name,
+                key: jobType.key,
+                description: jobType.description,
+                createdAt: jobType.createdAt,
+                updatedAt: jobType.updatedAt,
+            },
+        });
+    }
+    catch (error) {
+        console.error("Error update job type controller:", error);
+        return res.status(500).json({ message: error.message });
+    }
+};
+exports.updateJobTypeController = updateJobTypeController;
