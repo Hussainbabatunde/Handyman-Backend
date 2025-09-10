@@ -1,12 +1,17 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "target": "ESNext",
+    "module": "commonjs",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "resolveJsonModule": true,
+    "outDir": "./dist",
     "esModuleInterop": true,
-    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "outDir": "dist"
+    "strictNullChecks": false,
+    "skipLibCheck": true,
+    "allowJs": true          // 👈 Add this if your models are plain .js
   },
-  "include": ["src"]
+  "include": ["src/**/*", "models/*", "config/*"]
 }
