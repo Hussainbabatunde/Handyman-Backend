@@ -13,5 +13,6 @@
     "skipLibCheck": true,
     "allowJs": true          // 👈 Add this if your models are plain .js
   },
-  "include": ["src/**/*", "models/*", "config/*"]
+  "include": ["src/**/*", "models/*", "config/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }
