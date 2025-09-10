@@ -3,7 +3,8 @@ import { OtpService } from "../services/otpService";
 import { Sequelize, where } from "sequelize";
 import { generateToken } from "../utils/jwt";
 import bcrypt from "bcrypt";
-const { User, JobTypes } = require("../../models"); // adjust path if needed
+const { User } = require("../../models/user"); // adjust path if needed
+const { JobTypes } = require("../../models/jobtypes"); // adjust path if needed
 
 
 export const loginController = async (req: Request, res: Response) => {

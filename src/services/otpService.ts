@@ -21,7 +21,7 @@ export class OtpService {
     }
 
     static async validateOtp(phone: string, otp: string, sessionId: string): Promise<boolean | string> {
-        const data = await redisClient.get(`otp:${phone}`);
+        const data = <string> await redisClient.get(`otp:${phone}`);
         if(!data){
             return "No session created."
         }
