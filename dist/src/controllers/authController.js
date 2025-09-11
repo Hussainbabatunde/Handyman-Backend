@@ -3,13 +3,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.artisansUserController = exports.validateOtpController = exports.resendOtpController = exports.verifyPhoneController = exports.registerController = exports.loginController = void 0;
+exports.updateUserController = exports.artisansUserController = exports.validateOtpController = exports.resendOtpController = exports.verifyPhoneController = exports.registerController = exports.loginController = void 0;
 const otpService_1 = require("../services/otpService");
 const sequelize_1 = require("sequelize");
 const jwt_1 = require("../utils/jwt");
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const { User } = require("../../models/user"); // adjust path if needed
-const { JobTypes } = require("../../models/jobtypes"); // adjust path if needed
+const { User } = require("../../models"); // adjust path if needed
+const { JobTypes } = require("../../models"); // adjust path if needed
 const loginController = async (req, res) => {
     try {
         const { phoneNumber, password } = req.body;
@@ -43,6 +43,7 @@ const loginController = async (req, res) => {
                 phoneNumber: userInfo.phoneNumber,
                 userType: userInfo.userType,
                 completedKyc: userInfo?.completedKyc,
+                previousWork: userInfo?.previousWork,
                 createdAt: userInfo.createdAt,
                 updatedAt: userInfo.updatedAt
             },
@@ -72,38 +73,41 @@ const registerController = async (req, res) => {
         const userInfo = await User.findOne({
             where: { phoneNumber }
         });
+        console.log("userinfo: ", userInfo);
         if (userInfo) {
             return res.status(400).json({ message: "User already exist." });
         }
-        // Create the user (password will be hashed by the hook)
-        const user = await User.create({
-            email,
-            password,
-            phoneNumber,
-            lastName,
-            firstName,
-            userType,
-            userJobType
-        });
-        // Generate JWT (only include necessary fields)
-        const accessToken = (0, jwt_1.generateToken)({
-            id: user.id,
-            email: user.email,
-            userType: user.userType
-        });
-        return res.status(201).json({
-            message: 'User registered', accessToken, data: {
+        else {
+            // Create the user (password will be hashed by the hook)
+            const user = await User.create({
+                email,
+                password,
+                phoneNumber,
+                lastName,
+                firstName,
+                userType,
+                userJobType
+            });
+            // Generate JWT (only include necessary fields)
+            const accessToken = (0, jwt_1.generateToken)({
                 id: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
                 email: user.email,
-                phoneNumber: user.phoneNumber,
-                userType: user.userType,
-                userJobType: user.userJobType,
-                createdAt: user.createdAt,
-                updatedAt: user.updatedAt
-            }
-        });
+                userType: user.userType
+            });
+            return res.status(201).json({
+                message: 'User registered', accessToken, data: {
+                    id: user.id,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    email: user.email,
+                    phoneNumber: user.phoneNumber,
+                    userType: user.userType,
+                    userJobType: user.userJobType,
+                    createdAt: user.createdAt,
+                    updatedAt: user.updatedAt
+                }
+            });
+        }
     }
     catch (error) {
         console.error("Error register controller:", error);
@@ -208,3 +212,44 @@ const artisansUserController = async (req, res) => {
     }
 };
 exports.artisansUserController = artisansUserController;
+const updateUserController = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { firstName, lastName, phoneNumber, email, profileImg, previousWork } = req.body;
+        const user = await User.findByPk(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        // Start building update payload
+        const updateData = {
+            firstName: "",
+            lastName: "",
+            profileImg: "",
+            previousWork: [""]
+        };
+        if (firstName !== undefined)
+            updateData.firstName = firstName;
+        if (lastName !== undefined)
+            updateData.lastName = lastName;
+        if (profileImg !== undefined)
+            updateData.profileImg = profileImg;
+        // Append new image URLs to previousWork
+        if (previousWork && Array.isArray(previousWork)) {
+            updateData.previousWork = [...(user.previousWork || []), ...previousWork];
+        }
+        // Update without triggering password hash
+        await User.update(updateData, { where: { id: userId }, });
+        const updatedUser = await User.findByPk(userId, {
+            attributes: { exclude: ['password'] }
+        });
+        return res.status(200).json({
+            message: 'User updated successfully',
+            data: updatedUser
+        });
+    }
+    catch (error) {
+        console.error('Update user error:', error);
+        return res.status(500).json({ message: 'Internal server error', error });
+    }
+};
+exports.updateUserController = updateUserController;

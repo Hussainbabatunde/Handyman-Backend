@@ -92,10 +92,10 @@ module.exports = (sequelize, DataTypes) => {
         }
       },
       beforeUpdate: async (user) => {
-        if (user.password) {
-          const hash = await bcrypt.hash(user.password, 10);
-          user.password = hash;
-        }
+        if (user.changed('password')) {
+      const hash = await bcrypt.hash(user.password, 10);
+      user.password = hash;
+    }
       },
     },
   });
