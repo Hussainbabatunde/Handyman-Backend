@@ -41,6 +41,7 @@ export const loginController = async (req: Request, res: Response) => {
         phoneNumber: userInfo.phoneNumber,
         userType: userInfo.userType,
         completedKyc: userInfo?.completedKyc,
+        previousWork: userInfo?.previousWork,
         createdAt: userInfo.createdAt,
         updatedAt: userInfo.updatedAt
       },
@@ -207,5 +208,48 @@ export const artisansUserController = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("Error update job type controller:", error);
     return res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateUserController = async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.id;
+    const { firstName, lastName, phoneNumber, email, profileImg, previousWork } = req.body;
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Start building update payload
+    const updateData = {
+      firstName: "",
+      lastName: "",
+      profileImg: "",
+      previousWork: [""]
+    };
+
+    if (firstName !== undefined) updateData.firstName = firstName;
+    if (lastName !== undefined) updateData.lastName = lastName;
+    if (profileImg !== undefined) updateData.profileImg = profileImg;
+
+    // Append new image URLs to previousWork
+    if (previousWork && Array.isArray(previousWork)) {
+      updateData.previousWork = [...(user.previousWork || []), ...previousWork];
+    }
+    // Update without triggering password hash
+    await User.update(updateData, { where: { id: userId }, });
+
+    const updatedUser = await User.findByPk(userId, {
+  attributes: { exclude: ['password'] }
+} );
+
+    return res.status(200).json({
+      message: 'User updated successfully',
+      data: updatedUser
+    });
+  } catch (error) {
+    console.error('Update user error:', error);
+    return res.status(500).json({ message: 'Internal server error', error });
   }
 };

@@ -10,4 +10,5 @@ AuthRouter.post("/verify", authController_1.verifyPhoneController);
 AuthRouter.post("/resend-otp", authController_1.resendOtpController);
 AuthRouter.post("/validate-otp", authController_1.validateOtpController);
 AuthRouter.get("/artisans/:key", authMiddleware_1.authMiddleware, authController_1.artisansUserController);
+AuthRouter.put("/update/:id", authMiddleware_1.authMiddleware, authController_1.updateUserController);
 exports.default = AuthRouter;
