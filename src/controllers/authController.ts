@@ -235,7 +235,7 @@ export const updateUserController = async (req: Request, res: Response) => {
 
     // Append new image URLs to previousWork
     if (previousWork && Array.isArray(previousWork)) {
-      updateData.previousWork = [...(user.previousWork || []), ...previousWork];
+      updateData.previousWork = [...(user.previousWork || [])];
     }
     // Update without triggering password hash
     await User.update(updateData, { where: { id: userId }, });
