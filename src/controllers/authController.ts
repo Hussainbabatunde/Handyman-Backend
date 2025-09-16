@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { OtpService } from "../services/otpService";
-import { Sequelize, where } from "sequelize";
+import { Op, Sequelize, where } from "sequelize";
 import { generateToken } from "../utils/jwt";
 import bcrypt from "bcrypt";
 const {User} = require("../../models"); // adjust path if needed
@@ -63,8 +63,13 @@ export const registerController = async (req: Request, res: Response) => {
 
     if (password != confirmPassword) return res.status(400).json({ message: "Passwords do not match." })
     const userInfo = await User.findOne({
-      where: { phoneNumber }
-    })
+  where: {
+    [Op.or]: [
+      { phoneNumber },
+      { email }
+    ]
+  }
+});
     console.log("userinfo: ", userInfo);
     
     if (userInfo) {

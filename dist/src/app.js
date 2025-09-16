@@ -11,9 +11,10 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const routes_1 = __importDefault(require("./routes/routes"));
 const upload_1 = __importDefault(require("./utils/upload"));
-const http_1 = require("http");
 const socket_io_1 = require("socket.io");
 const chatController_1 = require("./controllers/chatController");
+const https_1 = __importDefault(require("https"));
+const fs_1 = __importDefault(require("fs"));
 const db = require('../models');
 const cron = require("node-cron");
 const { Bookings } = require("../models"); // adjust path to your models
@@ -37,7 +38,10 @@ app.use((err, req, res, next) => {
 });
 const PORT = process.env.PORT || 3002;
 // Create HTTP server (needed for socket.io)
-const httpServer = (0, http_1.createServer)(app);
+const httpServer = https_1.default.createServer({
+    key: fs_1.default.readFileSync("/etc/letsencrypt/live/toolbox.com.ng/privkey.pem"),
+    cert: fs_1.default.readFileSync("/etc/letsencrypt/live/toolbox.com.ng/fullchain.pem"),
+}, app);
 // Init Socket.IO
 const io = new socket_io_1.Server(httpServer, {
     cors: { origin: "*" }

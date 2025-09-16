@@ -71,7 +71,12 @@ const registerController = async (req, res) => {
         if (password != confirmPassword)
             return res.status(400).json({ message: "Passwords do not match." });
         const userInfo = await User.findOne({
-            where: { phoneNumber }
+            where: {
+                [sequelize_1.Op.or]: [
+                    { phoneNumber },
+                    { email }
+                ]
+            }
         });
         console.log("userinfo: ", userInfo);
         if (userInfo) {
