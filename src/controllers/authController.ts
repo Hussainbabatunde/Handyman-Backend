@@ -219,7 +219,7 @@ export const artisansUserController = async (req: Request, res: Response) => {
 export const updateUserController = async (req: Request, res: Response) => {
   try {
     const userId = req.params.id;
-    const { firstName, lastName, phoneNumber, email, profileImg, previousWork } = req.body;
+    const { firstName, lastName, phoneNumber, description, profileImg, previousWork } = req.body;
 
     const user = await User.findByPk(userId);
     if (!user) {
@@ -231,12 +231,14 @@ export const updateUserController = async (req: Request, res: Response) => {
       firstName: "",
       lastName: "",
       profileImg: "",
-      previousWork: [""]
+      previousWork: [""],
+      description: ""
     };
 
     if (firstName !== undefined) updateData.firstName = firstName;
     if (lastName !== undefined) updateData.lastName = lastName;
     if (profileImg !== undefined) updateData.profileImg = profileImg;
+    if (description !== undefined) updateData.description = description;
 
     // Append new image URLs to previousWork
     if (previousWork && Array.isArray(previousWork)) {
