@@ -38,7 +38,6 @@ module.exports = (sequelize, DataTypes) => {
     email: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
       validate: { isEmail: true, notEmpty: true },
     },
     phoneNumber: {
@@ -80,7 +79,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
-    }
+    },
+    description: {
+      type: DataTypes.TEXT, // Stores an array of strings
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'User',

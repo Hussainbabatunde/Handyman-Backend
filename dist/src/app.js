@@ -11,9 +11,9 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const routes_1 = __importDefault(require("./routes/routes"));
 const upload_1 = __importDefault(require("./utils/upload"));
-const http_1 = require("http");
 const socket_io_1 = require("socket.io");
 const chatController_1 = require("./controllers/chatController");
+const http_1 = __importDefault(require("http"));
 const db = require('../models');
 const cron = require("node-cron");
 const { Bookings } = require("../models"); // adjust path to your models
@@ -37,7 +37,7 @@ app.use((err, req, res, next) => {
 });
 const PORT = process.env.PORT || 3002;
 // Create HTTP server (needed for socket.io)
-const httpServer = (0, http_1.createServer)(app);
+const httpServer = http_1.default.createServer(app);
 // Init Socket.IO
 const io = new socket_io_1.Server(httpServer, {
     cors: { origin: "*" }

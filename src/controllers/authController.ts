@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { OtpService } from "../services/otpService";
-import { Sequelize, where } from "sequelize";
+import { Op, Sequelize, where } from "sequelize";
 import { generateToken } from "../utils/jwt";
 import bcrypt from "bcrypt";
 const {User} = require("../../models"); // adjust path if needed
@@ -63,8 +63,13 @@ export const registerController = async (req: Request, res: Response) => {
 
     if (password != confirmPassword) return res.status(400).json({ message: "Passwords do not match." })
     const userInfo = await User.findOne({
-      where: { phoneNumber }
-    })
+  where: {
+    [Op.or]: [
+      { phoneNumber },
+      { email }
+    ]
+  }
+});
     console.log("userinfo: ", userInfo);
     
     if (userInfo) {
@@ -214,7 +219,7 @@ export const artisansUserController = async (req: Request, res: Response) => {
 export const updateUserController = async (req: Request, res: Response) => {
   try {
     const userId = req.params.id;
-    const { firstName, lastName, phoneNumber, email, profileImg, previousWork } = req.body;
+    const { firstName, lastName, phoneNumber, description, profileImg, previousWork } = req.body;
 
     const user = await User.findByPk(userId);
     if (!user) {
@@ -226,12 +231,14 @@ export const updateUserController = async (req: Request, res: Response) => {
       firstName: "",
       lastName: "",
       profileImg: "",
-      previousWork: [""]
+      previousWork: [""],
+      description: ""
     };
 
     if (firstName !== undefined) updateData.firstName = firstName;
     if (lastName !== undefined) updateData.lastName = lastName;
     if (profileImg !== undefined) updateData.profileImg = profileImg;
+    if (description !== undefined) updateData.description = description;
 
     // Append new image URLs to previousWork
     if (previousWork && Array.isArray(previousWork)) {

@@ -71,7 +71,12 @@ const registerController = async (req, res) => {
         if (password != confirmPassword)
             return res.status(400).json({ message: "Passwords do not match." });
         const userInfo = await User.findOne({
-            where: { phoneNumber }
+            where: {
+                [sequelize_1.Op.or]: [
+                    { phoneNumber },
+                    { email }
+                ]
+            }
         });
         console.log("userinfo: ", userInfo);
         if (userInfo) {
@@ -215,7 +220,7 @@ exports.artisansUserController = artisansUserController;
 const updateUserController = async (req, res) => {
     try {
         const userId = req.params.id;
-        const { firstName, lastName, phoneNumber, email, profileImg, previousWork } = req.body;
+        const { firstName, lastName, phoneNumber, description, profileImg, previousWork } = req.body;
         const user = await User.findByPk(userId);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
@@ -225,7 +230,8 @@ const updateUserController = async (req, res) => {
             firstName: "",
             lastName: "",
             profileImg: "",
-            previousWork: [""]
+            previousWork: [""],
+            description: ""
         };
         if (firstName !== undefined)
             updateData.firstName = firstName;
@@ -233,6 +239,8 @@ const updateUserController = async (req, res) => {
             updateData.lastName = lastName;
         if (profileImg !== undefined)
             updateData.profileImg = profileImg;
+        if (description !== undefined)
+            updateData.description = description;
         // Append new image URLs to previousWork
         if (previousWork && Array.isArray(previousWork)) {
             updateData.previousWork = [...(user.previousWork || [])];

@@ -10,6 +10,9 @@ import uploadRouter from './utils/upload';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { registerChatHandler } from './controllers/chatController';
+import https from "https";
+import fs from "fs"
+import http from "http"
 const db = require('../models');
 const cron = require("node-cron");
 const { Bookings } = require("../models"); // adjust path to your models
@@ -42,7 +45,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 const PORT = process.env.PORT || 3002;
 
 // Create HTTP server (needed for socket.io)
-const httpServer = createServer(app);
+const httpServer = http.createServer(app);
 
 // Init Socket.IO
 const io = new Server(httpServer, {
