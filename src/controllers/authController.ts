@@ -40,6 +40,7 @@ export const loginController = async (req: Request, res: Response) => {
         email: userInfo.email,
         phoneNumber: userInfo.phoneNumber,
         userType: userInfo.userType,
+        profileImg: userInfo.profileImg,
         completedKyc: userInfo?.completedKyc,
         previousWork: userInfo?.previousWork,
         createdAt: userInfo.createdAt,
@@ -70,7 +71,7 @@ export const registerController = async (req: Request, res: Response) => {
     ]
   }
 });
-    console.log("userinfo: ", userInfo);
+    // console.log("userinfo: ", userInfo);
     
     if (userInfo) {
       return res.status(400).json({ message: "User already exist." })
@@ -111,6 +112,43 @@ export const registerController = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("Error register controller:", error);
     return res.status(400).json({ message: error.message });
+  }
+};
+
+export const forgotPasswordController = async (req: Request, res: Response) => {
+  try {
+    const { id, password } = req.body;
+
+    if (!id) return res.status(400).json({ message: "User id is required." });
+    if (!password) return res.status(400).json({ message: "Password is required." });
+
+    // Find user by ID
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // If your User model has a "beforeSave" hook for hashing, just do this:
+    user.password = password; // it will get hashed automatically
+    await user.save();
+
+    // If you don’t have a hook, do manual hashing like this:
+    // const hashedPassword = await bcrypt.hash(password, 10);
+    // user.password = hashedPassword;
+    // await user.save();
+
+    return res.status(200).json({
+      message: "Password updated successfully.",
+      data: {
+        id: user?.id,
+        email: user?.email,
+        phoneNumber: user?.phoneNumber,
+        updatedAt: user?.updatedAt,
+      },
+    });
+  } catch (error: any) {
+    console.error("Error in forgotPasswordController:", error);
+    return res.status(500).json({ message: error.message });
   }
 };
 

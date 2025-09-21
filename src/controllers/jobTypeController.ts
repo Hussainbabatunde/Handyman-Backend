@@ -5,10 +5,11 @@ const {JobTypes} = require("../../models"); // adjust path if needed
 
 export const createJobTypeController = async (req: Request, res: Response) => {
   try {
-    const { name, key, description} = req.body;
+    const { name, key, description, image} = req.body;
   if(!name) return res.status(400).json({message: "Email is required."})
   if(!key) return res.status(400).json({message: "Password is required."})
   if(!description) return res.status(400).json({message: "Description is required."})
+  if(!image) return res.status(400).json({message: "Image is required."})
 
     const prevJobType = await JobTypes.findOne({
   where: {
@@ -25,7 +26,8 @@ if(prevJobType) return res.status(400).json({message: "Job type exist."})
     const jobType = await JobTypes.create({
       name,
       key,
-      description
+      description,
+      image
     });
 
     
