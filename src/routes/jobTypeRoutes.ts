@@ -7,5 +7,6 @@ const JobTypesRouter = Router();
 JobTypesRouter.post("/create", createJobTypeController);
 JobTypesRouter.get("/all", getJobTypeController);
 JobTypesRouter.patch("/update/:key", updateJobTypeController);
+JobTypesRouter.delete("/delete/:id", updateJobTypeController);
 
 export default JobTypesRouter;

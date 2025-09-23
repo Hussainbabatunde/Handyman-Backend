@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateUserController = exports.artisansUserController = exports.validateOtpController = exports.resendOtpController = exports.verifyPhoneController = exports.registerController = exports.loginController = void 0;
+exports.updateUserController = exports.artisansUserController = exports.validateOtpController = exports.resendOtpController = exports.verifyPhoneController = exports.forgotPasswordController = exports.registerController = exports.loginController = void 0;
 const otpService_1 = require("../services/otpService");
 const sequelize_1 = require("sequelize");
 const jwt_1 = require("../utils/jwt");
@@ -42,6 +42,7 @@ const loginController = async (req, res) => {
                 email: userInfo.email,
                 phoneNumber: userInfo.phoneNumber,
                 userType: userInfo.userType,
+                profileImg: userInfo.profileImg,
                 completedKyc: userInfo?.completedKyc,
                 previousWork: userInfo?.previousWork,
                 createdAt: userInfo.createdAt,
@@ -78,7 +79,7 @@ const registerController = async (req, res) => {
                 ]
             }
         });
-        console.log("userinfo: ", userInfo);
+        // console.log("userinfo: ", userInfo);
         if (userInfo) {
             return res.status(400).json({ message: "User already exist." });
         }
@@ -120,6 +121,41 @@ const registerController = async (req, res) => {
     }
 };
 exports.registerController = registerController;
+const forgotPasswordController = async (req, res) => {
+    try {
+        const { id, password } = req.body;
+        if (!id)
+            return res.status(400).json({ message: "User id is required." });
+        if (!password)
+            return res.status(400).json({ message: "Password is required." });
+        // Find user by ID
+        const user = await User.findByPk(id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found." });
+        }
+        // If your User model has a "beforeSave" hook for hashing, just do this:
+        user.password = password; // it will get hashed automatically
+        await user.save();
+        // If you don’t have a hook, do manual hashing like this:
+        // const hashedPassword = await bcrypt.hash(password, 10);
+        // user.password = hashedPassword;
+        // await user.save();
+        return res.status(200).json({
+            message: "Password updated successfully.",
+            data: {
+                id: user?.id,
+                email: user?.email,
+                phoneNumber: user?.phoneNumber,
+                updatedAt: user?.updatedAt,
+            },
+        });
+    }
+    catch (error) {
+        console.error("Error in forgotPasswordController:", error);
+        return res.status(500).json({ message: error.message });
+    }
+};
+exports.forgotPasswordController = forgotPasswordController;
 const verifyPhoneController = async (req, res) => {
     try {
         // const allUser = await User.findAll()
