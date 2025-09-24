@@ -3,8 +3,33 @@ import { OtpService } from "../services/otpService";
 import { Op, Sequelize, where } from "sequelize";
 import { generateToken } from "../utils/jwt";
 import bcrypt from "bcrypt";
+import axios from "axios";
 const {User} = require("../../models"); // adjust path if needed
 const {JobTypes} = require("../../models"); // adjust path if needed
+
+let MOBILE_APP_V1_API= "https://staging-upgrade.fbninsurance.co/api/app-version/"
+let MOBILE_APP_V1_XTOKEN= "ivN4lZnS1Sdqdw0AfnU5IWRYQQaocztafvWn2ckX9WwpfbBqLHCGPdSvdhnqiCM6"
+
+export const timeout = parseInt("10000", 10);
+
+const baseConfig = {
+	timeout,
+	headers: {
+		"X-App-Token": "ivN4lZnS1Sdqdw0AfnU5IWRYQQaocztafvWn2ckX9WwpfbBqLHCGPdSvdhnqiCM6",
+		Accept: "application/json",
+	},
+};
+
+const appv1Api = axios.create({
+	...baseConfig,
+	baseURL: MOBILE_APP_V1_API,
+});
+
+export async function send_sms(phone_number: string, message: string) {
+	const { data } = await appv1Api.post("send-sms", { phone_number, message });
+	return data;
+}
+
 
 
 export const loginController = async (req: Request, res: Response) => {
@@ -160,6 +185,7 @@ export const verifyPhoneController = async (req: Request, res: Response) => {
     if (!phoneNo) return res.status(400).json({ message: "Phone number is required." })
 
     const { sessionId, otp } = await OtpService.generateOtp(phoneNo)
+    let resSend = await send_sms(phoneNo, `Your verification OTP is ${otp}`)
     return res.status(200).json({ message: "Otp sent successfully", sessionId, otp })
   } catch (err) {
     console.error("Error verify phone controller:", err);
@@ -175,6 +201,7 @@ export const resendOtpController = async (req: Request, res: Response) => {
     if (!sessionId) return res.status(400).json({ message: "Session ID is required." })
 
     const { otp } = await OtpService.resendOtp(phoneNo, sessionId)
+    let resSend = await send_sms(phoneNo, `Your verification OTP is ${otp}`)
     return res.status(200).json({ message: "Otp sent successfully", otp })
   } catch (err) {
     console.error("Error resend OTP controller:", err);
@@ -189,8 +216,8 @@ export const validateOtpController = async (req: Request, res: Response) => {
     if (!sessionId || !otp) return res.status(400).json({ message: "Session ID and OTP is required." })
 
     const isValid = await OtpService.validateOtp(phoneNo, otp, sessionId)
-    // if(isValid != true){
-    if (otp != "1234") {
+    if(isValid != true){
+    // if (otp != "1234") {
       return res.status(400).json({ message: isValid })
     }
     const userInfo = await User.findOne({
@@ -280,7 +307,7 @@ export const updateUserController = async (req: Request, res: Response) => {
 
     // Append new image URLs to previousWork
     if (previousWork && Array.isArray(previousWork)) {
-      updateData.previousWork = [...(user.previousWork || [])];
+      updateData.previousWork = [...(previousWork || [])];
     }
     // Update without triggering password hash
     await User.update(updateData, { where: { id: userId }, });

@@ -6,5 +6,5 @@ const JobTypesRouter = (0, express_1.Router)();
 JobTypesRouter.post("/create", jobTypeController_1.createJobTypeController);
 JobTypesRouter.get("/all", jobTypeController_1.getJobTypeController);
 JobTypesRouter.patch("/update/:key", jobTypeController_1.updateJobTypeController);
-JobTypesRouter.delete("/delete/:id", jobTypeController_1.updateJobTypeController);
+JobTypesRouter.delete("/delete/:id", jobTypeController_1.deleteJobTypeController);
 exports.default = JobTypesRouter;
