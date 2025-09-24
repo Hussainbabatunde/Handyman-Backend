@@ -206,8 +206,8 @@ export const BookingDetailsController = async (req: Request, res: Response) => {
     const bookingInfo = await Bookings.findOne({
       where: { id },
       include: [
-        { model: User, as: "requester", attributes: ["id", "firstName", "lastName", "email"] },
-        { model: User, as: "artisan", attributes: ["id", "firstName", "lastName", "email"] },
+        { model: User, as: "requester", attributes: ["id", "firstName", "lastName", "email", "profileImg"] },
+        { model: User, as: "artisan", attributes: ["id", "firstName", "lastName", "email", "profileImg"] },
         { model: JobTypes, as: "jobType", attributes: ["id", "name", "key", "description"] },
       ]
     });

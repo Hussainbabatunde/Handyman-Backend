@@ -58,7 +58,7 @@ export const getJobTypeController = async (req: Request, res: Response) => {
 export const updateJobTypeController = async (req: Request, res: Response) => {
   try {
     const { key } = req.params; // search by key
-    const { name, description } = req.body;
+    const { name, description, image } = req.body;
     
 
     if (!key) {
@@ -74,6 +74,7 @@ export const updateJobTypeController = async (req: Request, res: Response) => {
     // Update only fields provided
     if (name) jobType.name = name;
     if (description) jobType.description = description;
+    if (image) jobType.image = image;
 
     await jobType.save();
 
@@ -83,6 +84,7 @@ export const updateJobTypeController = async (req: Request, res: Response) => {
         id: jobType.id,
         name: jobType.name,
         key: jobType.key,
+        image: jobType.image,
         description: jobType.description,
         createdAt: jobType.createdAt,
         updatedAt: jobType.updatedAt,
@@ -90,6 +92,32 @@ export const updateJobTypeController = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error("Error update job type controller:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteJobTypeController = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params; // delete by id
+
+    if (!id) {
+      return res.status(400).json({ message: "ID is required to delete job type." });
+    }
+
+    // Find job type by id
+    const jobType = await JobTypes.findOne({ where: { id } });
+    if (!jobType) {
+      return res.status(404).json({ message: "Job type not found." });
+    }
+
+    await jobType.destroy();
+
+    return res.status(200).json({
+      message: "Job type deleted successfully.",
+      deletedId: id,
+    });
+  } catch (error: any) {
+    console.error("Error delete job type controller:", error);
     return res.status(500).json({ message: error.message });
   }
 };

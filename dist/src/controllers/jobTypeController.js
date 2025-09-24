@@ -1,17 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateJobTypeController = exports.getJobTypeController = exports.createJobTypeController = void 0;
+exports.deleteJobTypeController = exports.updateJobTypeController = exports.getJobTypeController = exports.createJobTypeController = void 0;
 const sequelize_1 = require("sequelize");
 const { JobTypes } = require("../../models"); // adjust path if needed
 const createJobTypeController = async (req, res) => {
     try {
-        const { name, key, description } = req.body;
+        const { name, key, description, image } = req.body;
         if (!name)
             return res.status(400).json({ message: "Email is required." });
         if (!key)
             return res.status(400).json({ message: "Password is required." });
         if (!description)
             return res.status(400).json({ message: "Description is required." });
+        if (!image)
+            return res.status(400).json({ message: "Image is required." });
         const prevJobType = await JobTypes.findOne({
             where: {
                 [sequelize_1.Op.or]: [
@@ -26,7 +28,8 @@ const createJobTypeController = async (req, res) => {
         const jobType = await JobTypes.create({
             name,
             key,
-            description
+            description,
+            image
         });
         return res.status(201).json({ message: 'Job type created successfully.', data: {
                 name: jobType.id,
@@ -55,7 +58,7 @@ exports.getJobTypeController = getJobTypeController;
 const updateJobTypeController = async (req, res) => {
     try {
         const { key } = req.params; // search by key
-        const { name, description } = req.body;
+        const { name, description, image } = req.body;
         if (!key) {
             return res.status(400).json({ message: "Key is required to update job type." });
         }
@@ -69,6 +72,8 @@ const updateJobTypeController = async (req, res) => {
             jobType.name = name;
         if (description)
             jobType.description = description;
+        if (image)
+            jobType.image = image;
         await jobType.save();
         return res.status(200).json({
             message: "Job type updated successfully.",
@@ -76,6 +81,7 @@ const updateJobTypeController = async (req, res) => {
                 id: jobType.id,
                 name: jobType.name,
                 key: jobType.key,
+                image: jobType.image,
                 description: jobType.description,
                 createdAt: jobType.createdAt,
                 updatedAt: jobType.updatedAt,
@@ -88,3 +94,26 @@ const updateJobTypeController = async (req, res) => {
     }
 };
 exports.updateJobTypeController = updateJobTypeController;
+const deleteJobTypeController = async (req, res) => {
+    try {
+        const { id } = req.params; // delete by id
+        if (!id) {
+            return res.status(400).json({ message: "ID is required to delete job type." });
+        }
+        // Find job type by id
+        const jobType = await JobTypes.findOne({ where: { id } });
+        if (!jobType) {
+            return res.status(404).json({ message: "Job type not found." });
+        }
+        await jobType.destroy();
+        return res.status(200).json({
+            message: "Job type deleted successfully.",
+            deletedId: id,
+        });
+    }
+    catch (error) {
+        console.error("Error delete job type controller:", error);
+        return res.status(500).json({ message: error.message });
+    }
+};
+exports.deleteJobTypeController = deleteJobTypeController;

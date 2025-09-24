@@ -30,7 +30,11 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.TEXT,
             allowNull: false,
             validate: { notEmpty: true },
-        }
+        },
+        image: {
+            type: DataTypes.STRING, // store image URL or path
+            allowNull: true, // make it optional
+        },
     }, {
         sequelize,
         modelName: 'JobTypes',

@@ -3,13 +3,33 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateUserController = exports.artisansUserController = exports.validateOtpController = exports.resendOtpController = exports.verifyPhoneController = exports.registerController = exports.loginController = void 0;
+exports.updateUserController = exports.artisansUserController = exports.validateOtpController = exports.resendOtpController = exports.verifyPhoneController = exports.forgotPasswordController = exports.registerController = exports.loginController = exports.timeout = void 0;
+exports.send_sms = send_sms;
 const otpService_1 = require("../services/otpService");
 const sequelize_1 = require("sequelize");
 const jwt_1 = require("../utils/jwt");
 const bcrypt_1 = __importDefault(require("bcrypt"));
+const axios_1 = __importDefault(require("axios"));
 const { User } = require("../../models"); // adjust path if needed
 const { JobTypes } = require("../../models"); // adjust path if needed
+let MOBILE_APP_V1_API = "https://staging-upgrade.fbninsurance.co/api/app-version/";
+let MOBILE_APP_V1_XTOKEN = "ivN4lZnS1Sdqdw0AfnU5IWRYQQaocztafvWn2ckX9WwpfbBqLHCGPdSvdhnqiCM6";
+exports.timeout = parseInt("10000", 10);
+const baseConfig = {
+    timeout: exports.timeout,
+    headers: {
+        "X-App-Token": "ivN4lZnS1Sdqdw0AfnU5IWRYQQaocztafvWn2ckX9WwpfbBqLHCGPdSvdhnqiCM6",
+        Accept: "application/json",
+    },
+};
+const appv1Api = axios_1.default.create({
+    ...baseConfig,
+    baseURL: MOBILE_APP_V1_API,
+});
+async function send_sms(phone_number, message) {
+    const { data } = await appv1Api.post("send-sms", { phone_number, message });
+    return data;
+}
 const loginController = async (req, res) => {
     try {
         const { phoneNumber, password } = req.body;
@@ -42,6 +62,7 @@ const loginController = async (req, res) => {
                 email: userInfo.email,
                 phoneNumber: userInfo.phoneNumber,
                 userType: userInfo.userType,
+                profileImg: userInfo.profileImg,
                 completedKyc: userInfo?.completedKyc,
                 previousWork: userInfo?.previousWork,
                 createdAt: userInfo.createdAt,
@@ -78,7 +99,7 @@ const registerController = async (req, res) => {
                 ]
             }
         });
-        console.log("userinfo: ", userInfo);
+        // console.log("userinfo: ", userInfo);
         if (userInfo) {
             return res.status(400).json({ message: "User already exist." });
         }
@@ -120,6 +141,41 @@ const registerController = async (req, res) => {
     }
 };
 exports.registerController = registerController;
+const forgotPasswordController = async (req, res) => {
+    try {
+        const { id, password } = req.body;
+        if (!id)
+            return res.status(400).json({ message: "User id is required." });
+        if (!password)
+            return res.status(400).json({ message: "Password is required." });
+        // Find user by ID
+        const user = await User.findByPk(id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found." });
+        }
+        // If your User model has a "beforeSave" hook for hashing, just do this:
+        user.password = password; // it will get hashed automatically
+        await user.save();
+        // If you don’t have a hook, do manual hashing like this:
+        // const hashedPassword = await bcrypt.hash(password, 10);
+        // user.password = hashedPassword;
+        // await user.save();
+        return res.status(200).json({
+            message: "Password updated successfully.",
+            data: {
+                id: user?.id,
+                email: user?.email,
+                phoneNumber: user?.phoneNumber,
+                updatedAt: user?.updatedAt,
+            },
+        });
+    }
+    catch (error) {
+        console.error("Error in forgotPasswordController:", error);
+        return res.status(500).json({ message: error.message });
+    }
+};
+exports.forgotPasswordController = forgotPasswordController;
 const verifyPhoneController = async (req, res) => {
     try {
         // const allUser = await User.findAll()
@@ -128,6 +184,7 @@ const verifyPhoneController = async (req, res) => {
         if (!phoneNo)
             return res.status(400).json({ message: "Phone number is required." });
         const { sessionId, otp } = await otpService_1.OtpService.generateOtp(phoneNo);
+        let resSend = await send_sms(phoneNo, `Your verification OTP is ${otp}`);
         return res.status(200).json({ message: "Otp sent successfully", sessionId, otp });
     }
     catch (err) {
@@ -144,6 +201,7 @@ const resendOtpController = async (req, res) => {
         if (!sessionId)
             return res.status(400).json({ message: "Session ID is required." });
         const { otp } = await otpService_1.OtpService.resendOtp(phoneNo, sessionId);
+        let resSend = await send_sms(phoneNo, `Your verification OTP is ${otp}`);
         return res.status(200).json({ message: "Otp sent successfully", otp });
     }
     catch (err) {
@@ -160,8 +218,8 @@ const validateOtpController = async (req, res) => {
         if (!sessionId || !otp)
             return res.status(400).json({ message: "Session ID and OTP is required." });
         const isValid = await otpService_1.OtpService.validateOtp(phoneNo, otp, sessionId);
-        // if(isValid != true){
-        if (otp != "1234") {
+        if (isValid != true) {
+            // if (otp != "1234") {
             return res.status(400).json({ message: isValid });
         }
         const userInfo = await User.findOne({
@@ -243,7 +301,7 @@ const updateUserController = async (req, res) => {
             updateData.description = description;
         // Append new image URLs to previousWork
         if (previousWork && Array.isArray(previousWork)) {
-            updateData.previousWork = [...(user.previousWork || [])];
+            updateData.previousWork = [...(previousWork || [])];
         }
         // Update without triggering password hash
         await User.update(updateData, { where: { id: userId }, });

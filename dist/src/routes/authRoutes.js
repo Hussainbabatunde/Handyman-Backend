@@ -6,6 +6,7 @@ const authMiddleware_1 = require("../middlewares/authMiddleware");
 const AuthRouter = (0, express_1.Router)();
 AuthRouter.post("/login", authController_1.loginController);
 AuthRouter.post("/register", authController_1.registerController);
+AuthRouter.post("/forgot-password", authController_1.forgotPasswordController);
 AuthRouter.post("/verify", authController_1.verifyPhoneController);
 AuthRouter.post("/resend-otp", authController_1.resendOtpController);
 AuthRouter.post("/validate-otp", authController_1.validateOtpController);
